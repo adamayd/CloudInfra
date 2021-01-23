@@ -22,7 +22,7 @@ resource "google_compute_instance" "vm_instance" {
   }
 
   service_account {
-    scopes = ["storage-ro", "logging-write", "monitoring-write", "pubsub", "service-management", "service-control", "trace"]
+    scopes = ["storage-ro", "logging-write", "monitoring-write", "pubsub", "service-management", "service-control"]
   }
 }
 
