@@ -13,10 +13,10 @@ provider "aws" {
   region = "us-east-2"
 }
 
-resource "aws_instance" "webserver_app" {
-  ami                    = "ami-0c55b159cbfafe1f0"
-  instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.webserver_sg.id]
+resource "aws_launch_configuration" "webserver_app" {
+  image_id        = "ami-0c55b159cbfafe1f0"
+  instance_type   = "t2.micro"
+  security_groups = [aws_security_group.webserver_sg.id]
 
   user_data = <<-EOF
               #!/bin/bash
@@ -24,9 +24,22 @@ resource "aws_instance" "webserver_app" {
               nohup busybox httpd -f -p ${var.http_port} &
               EOF
 
+  # Required when using a launch configuration with an ASG.
+  # https://www.terraform.io/docs/providers/aws/r/launch_configuration.html
+  lifecycle {
+    create_before_destroy = true
+  }
+}
 
-  tags = {
-    Name = "WebServer"
+resource "aws_autoscaling_group" "webservers_asg" {
+  launch_configuration = aws_launch_configuration.webserver_app.name
+  min_size             = 2
+  max_size             = 10
+
+  tag {
+    key                 = "Name"
+    value               = "terraform-asg-webserver"
+    propagate_at_launch = true
   }
 }
 
